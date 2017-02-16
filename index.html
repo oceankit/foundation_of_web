@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <style type="text/css">
+        table {
+          border-collapse: collapse;
+          margin: auto;
+        }
+
+
+      body {
+        color: #666;
+        font-family: Lato, Arial, sans-serif;
+        font-size: 16px;
+        }
+
+      img {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        }
+
+      .panel1, .flip, .panel2, .flip2 {
+          padding: 5px;
+          text-align: center;
+          background-color: #e5eecc;
+          border: solid 1px #c3c3c3;
+        }
+
+
+      .panel1, .panel2 {
+          padding: 50px;
+          display: none;
+        }
+
+      #signoutbtn { 
+      display: none;
+       }
+  </style>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <script src="jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+      /*
+        ' '      - hidden cell
+        '.'      - empty cell
+        'm'      - bomb
+        'f'      - flag
+        '1'..'8' - number of bombs
+      */
+      
+
+      var map = [
+        ['1', '1', '1', '0', '1', 'm', '1', '1', '2', 'm'],
+        ['1', 'm', '1', '0', '1', '1', '1', 'm', '2', '1'],
+        ['1', '1', '2', '1', '1', '0', '1', '1', '1', '0'],
+        ['0', '0', '1', 'm', '1', '0', '0', '0', '0', '0'],
+        ['1', '1', '1', '1', '1', '0', '0', '0', '0', '0'],
+        ['m', '2', '1', '1', '1', '1', '0', '0', '0', '0'],
+        ['2', 'm', '2', '1', 'm', '1', '1', '1', '1', '0'],
+        ['1', '1', '2', 'm', '2', '1', '3', 'm', '2', '0'],
+        ['0', '0', '1', '1', '1', '1', 'm', 'm', '2', '0'],
+        ['0', '0', '1', '0', '0', '1', '2', '2', '1', '0'],
+      ];
+
+      var fieldmap = [
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+      ];
+
+
+      $(document).ready(function(){
+        $("#easy").click(function(){
+            n = 5;
+            GenerateMap(n);
+            $("button").hide();
+        });
+      });
+
+    $(document).ready(function(){
+            $("#medium").click(function(){
+                n = 7;
+                GenerateMap(n);
+                $("button").hide();
+            });
+          });
+
+    $(document).ready(function(){
+            $("#hard").click(function(){
+                n = 10;
+                GenerateMap(n);
+                $("button").hide();
+            });
+          });
+
+      var n = 0;
+      var queuer = [];
+      var queuec = [];
+
+      var flags = 12;
+      var bombs = 12;
+      var fields = n*n;
+      var fieldsForWin = 0;
+
+      var sec = 0;
+      var min = 0;
+      var score=0;
+
+      function Game(){
+          timerObj = setInterval(playing,1000);
+      }
+
+      function playing() {
+              sec = sec + 1;
+              if (sec==59) {
+                min = min + 1;
+                sec = 0;
+              }
+              $(document).ready(function(){
+                $("#time").html("Min: " + min + " Sec: " + sec);
+              });
+      } 
+
+      function winCheck(){
+        fieldsForWin++;
+        if (fieldsForWin == fields-bombs){
+          /*$(document).ready(function(){
+            $("div").empty();
+            $("#gameboard").html("<img src = 'you_won.png'>");  
+          })*/
+          alert("YOU WON!");
+          clearInterval(timerObj);
+          $(document).ready(function(){
+            $("#time").html(" ");
+          });
+        }
+      }
+
+
+      function showCell(r,c){
+        if(r < n && c < n){
+          if(r >= 0 && c >= 0){
+            if (fieldmap[r][c] == 0){
+              var _id = "#" + r + "_" + c;
+              console.log(_id);
+
+              fieldmap[r][c]=1;
+              var cont = "<img src='img" + map[r][c] + ".jpg'>";
+              $(_id).html(cont);
+
+              winCheck();
+
+              if(map[r][c] == '0'){
+                queuer.push(r);
+                queuec.push(c);
+                map[r][c] = '+';
+              } 
+            }
+          }
+        }
+      }
+
+      function showEmptyCell(r,c){
+        
+        queuer.push(r);
+        queuec.push(c);
+        var _id = "#" + r + "_" + c;
+        fieldmap[r][c]=1;
+        var cont = "<img src='img" + map[r][c] + ".jpg'>";
+        $(_id).html(cont);
+        map[r][c] = '+';
+
+        while(queuer.length > 0){
+          var tr  = queuer[0];
+          var tc  = queuec[0];
+          queuer  = queuer.slice(1);
+          queuec  = queuec.slice(1);
+
+          showCell(tr-1,tc);
+          showCell(tr+1,tc);
+          showCell(tr,tc+1);
+          showCell(tr,tc-1);
+          showCell(tr-1,tc-1);
+          showCell(tr+1,tc+1);
+          showCell(tr-1,tc+1);
+          showCell(tr+1,tc-1);  
+        }
+      }
+
+      $(document).on('click', '.gamecell' , function() {
+        var id = $(this).attr("id");
+        var objs = id.split("_");
+        
+        var r = objs[0];
+        var c = objs[1];
+        if(map[r][c] == 'm' && fieldmap[r][c]==0){
+          //alert("game over!");
+            for(i = 0; i < n; ++i){
+              for(j = 0; j < n; ++j){
+                var _id = "#" + i + "_" + j;
+                var cont = "<img src='img" + map[i][j] + ".jpg'>";
+                $(_id).html(cont); 
+                clearInterval(timerObj);
+                $("#time").html(" ");
+                score = min*60 + sec;
+
+                    $.ajax({
+                        type: 'POST',
+                        url: 'saveScore.php',
+                        data: { score: score
+                        },
+                        response: 'text',
+                        success: function(data){
+                        $(".panel1").html(data);
+                       }
+                      })
+
+            }
+          }
+          alert('Game OVER! Refresh to play AGAIN!');
+        }
+        else if(map[r][c] == '0' && fieldmap[r][c] == 0){
+            showEmptyCell(parseInt(r),parseInt(c));
+            winCheck();
+        }else{
+          if (fieldmap[r][c]==0){
+              fieldmap[r][c]=1;
+                var cont = "<img src='img" + map[r][c] + ".jpg'>";
+                $(this).html(cont);
+                winCheck();
+          }
+        }
+
+      });
+
+        $(document).on('contextmenu', '.gamecell' , function(e) {
+                e.preventDefault();
+                var id = $(this).attr("id");
+                var objs = id.split("_");
+                
+                var r = objs[0];
+                var c = objs[1];
+
+                if (fieldmap[r][c]==0){
+                      if (flags!=0){
+                      $(this).html("<img src='mineflagged.jpg'>");
+                      flags= flags - 1;
+                      fieldmap[r][c]=3;
+                    }   
+                }
+                else if (fieldmap[r][c]==3){
+                  $(this).html("<img src='field.jpg'>");
+                  fieldmap[r][c]=0;
+                  flags++;
+                }
+              });
+
+          function GenerateMap(n){
+                    var content = "<table>"; 
+                    for(i = 0; i < n; i++){
+                      content = content + "<tr>";
+                      for(j = 0; j < n; ++j){
+                        content = content + "<td  class = 'gamecell' id = " + i + "_" + j+">";
+                        content = content + "<img src='minefield.jpg'>";
+                        content = content + "</td>";
+                      }
+                      content = content + "</tr>";
+                    }
+                    
+                    content = content + "</table>";
+                    $("#ez").html(content);
+                    Game();
+          }
+
+
+
+    $(document).ready(function(){
+        $(".flip").click(function(){
+            $(".panel1").slideToggle("slow");
+        });
+    });
+
+    $(document).ready(function(){
+        $(".flip2").click(function(){
+            $(".panel2").slideToggle("slow");
+        });
+    });
+
+    function RegIn() {
+        var name = $("#name").val()
+        var username = $("#username").val()
+        var password = $("#password").val()
+
+          $.ajax({
+            type: 'POST',
+            url: 'register.php',
+            data: { name: name,
+              username: username,
+              password: password
+            },
+            response: 'text',
+            success: function(data){
+              $(".panel1").html(data);
+            }
+          })
+        }
+
+    function LogIn(){
+      var login = $("#login").val()
+      var pass = $("#pass").val()
+
+      $.ajax({
+        type: 'POST',
+        url: 'login.php',
+        data: { login: login,
+          pass: pass
+        },
+        response: 'text',
+        seccess: function(data){
+          $(".panel2").html(data);
+        }
+      })
+      NameLog();
+      $("#signoutbtn").css("display", "inline");
+      $("#loginbtn").css("display", "none");
+      $("#registerbtn").css("display", "none");
+    }
+
+    function NameLog(){
+      $("#LogInName").load("NameAfterLog.php");
+    }
+
+    function signOut(){
+      $("#LogInName").load("SignOut.php");
+      $("#loginbtn").css("display", "inline");
+      $("#registerbtn").css("display", "inline");
+    }
+
+    </script>
+  </head>
+  <body>
+  <br>
+    <button id="easy" class="btn btn-default">EASY MODE</button>
+    <button id="medium" class="btn btn-success">MEDIUM</button>
+    <button id="hard" class="btn btn-danger">HARD MODE</button>
+    <br> <br>
+    <button id="registerbtn" class="btn btn-default flip">REGISTER</button>
+    <button id="loginbtn" class="btn btn-default flip2" >LOGIN</button>
+    <button id="signoutbtn" class="btn btn-danger" onclick="signOut()">Sign Out</button>
+    <br>
+    <br>
+      <div class="panel1">
+          <form>
+            Name: <input type="text" id="name" name="name"> *
+            <br><br>
+            UserName: <input type="text" id="username" name="username"> *
+            <br><br>
+            Password: <input type="text" id="password" name="password"> *
+            <br><br>
+            <input type="submit" value="Sign In" onclick="RegIn()">
+          </form>
+      </div>
+      <div class="panel2">
+        <form>
+            Username: <input type="text" id="login" name="login">
+            <br><br>
+            Password: <input type="text" id="pass" name="pass">
+            <br><br>
+              <input type="submit" value="Log In" onclick="LogIn()">
+            </form>
+      </div>
+    <div id="ez"> </div>
+    <div id = "time"> </div>
+    <div id="LogInName"> </div>
+  </body>
+</html>
